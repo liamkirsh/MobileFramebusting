@@ -22,7 +22,7 @@ mobile_scraper = SeleniumScraper(CHROME_PATH, width=WINDOW_WIDTH, height=WINDOW_
 DEBUG = True
 
 if (DEBUG):
-    LIMIT = 5  # set to None when not testing
+    LIMIT = 10
 else:
     LIMIT = None
 

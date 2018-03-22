@@ -1,11 +1,14 @@
+import sys
+
 import requests
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from requests.exceptions import ConnectionError
 
 class SeleniumScraper:
     headers = {}
-    HEADERS_TO_LOG = ["X-Frame-Options", "Content-Security-Policy"]
+    HEADERS_TO_LOG = ["x-frame-options", "content-security-policy"]
     request_headers = None
 
     def __init__(self, chromedriver, width=None, height=None, user_agent=None):
@@ -33,9 +36,13 @@ class SeleniumScraper:
         if mobile_url != url:
             print("Redirect to " + mobile_url)
 
-        r = requests.get(mobile_url, headers=self.request_headers)
+        try:
+            r = requests.get(mobile_url, headers=self.request_headers)
+        except ConnectionError:
+            sys.stderr.write("Python-Requests connection error on {}\n".format(mobile_url))
+            return None
         return dict(((k, v) for (k, v) in r.headers.iteritems()
-                     if k in self.HEADERS_TO_LOG))
+                     if k.lower() in self.HEADERS_TO_LOG))
 
     def shutdown(self):
         self.driver.quit()
