@@ -1,2 +1,4 @@
 #ignoring files for arachni
+!/arachni
 /arachni/*
+!/arachni/script
