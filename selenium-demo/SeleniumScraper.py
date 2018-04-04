@@ -6,15 +6,13 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from requests.exceptions import ConnectionError
 
+EXT_ID = "nfjcdbackpnnlbnkmjfjgiokldjefbma"
+
 class SeleniumScraper:
     headers = {}
     HEADERS_TO_LOG = ["x-frame-options", "content-security-policy"]
-    request_headers = None
 
     def __init__(self, chromedriver, width=None, height=None, user_agent=None):
-        if user_agent:
-            self.request_headers = {'user-agent': user_agent}
-
         opts = Options()
         opts.set_headless(True)
         if width and height:
@@ -23,6 +21,9 @@ class SeleniumScraper:
         if user_agent:
             opts.add_argument("user-agent={}".format(user_agent))
         #opts.binary_location = "/usr/bin/google-chrome-stable"
+
+        opts.add_argument("load-extension=chrome_ext")
+        opts.add_argument("load-extension-key=chrome_ext.pem")
 
         self.driver = webdriver.Chrome(chromedriver, options=opts)
         if user_agent:
@@ -36,13 +37,10 @@ class SeleniumScraper:
         if mobile_url != url:
             print("Redirect to " + mobile_url)
 
-        try:
-            r = requests.get(mobile_url, headers=self.request_headers)
-        except ConnectionError:
-            sys.stderr.write("Python-Requests connection error on {}\n".format(mobile_url))
-            return None
-        return dict(((k, v) for (k, v) in r.headers.iteritems()
-                     if k.lower() in self.HEADERS_TO_LOG))
+        self.driver.get("chrome-extension://{}/_generated_background_page.html".format(EXT_ID))
+
+        return self.driver.execute_async_script(
+            "chrome.storage.local.get('securityHeaders', arguments[0])")
 
     def shutdown(self):
         self.driver.quit()

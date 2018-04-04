@@ -1,0 +1,23 @@
+{
+    "manifest_version": 2,
+
+    "name": "Selenium Framebusting Info Collector",
+    "description": "Collects framebusting info for Selenium",
+    "version": "1.0",
+
+    "browser_action": {
+        "default_icon": "icon.png"
+    },
+    "background": {
+        "scripts": ["background.js"],
+        "persistent": true
+    },
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqDNvvvwMA9Y80QB79oYu6FpqCvNSHnjZoaLFD4nxMJseAbRJlLia+66J+VIGF998Pbj4a14goo35ETSW3ftaeryryB9aFFUW7FiE1Eea/dluLj3ztpVoOCM3hc5gK56xQgVJWQ5oE0yUMp7EiKutIGPmt+VRyF40M5B9r/RX6XfbG3DT283MnS2lxxiQ1KjLKq8IQyFez3g5njvbUi1qNFuQYtxX6rcu7d2xcyl3lV9VdkDCXnmv7fSxLUiKt1QFoa3/uz9Gyh8uT/Ur9UiAcr8egVVuj/5gKavi2UfokXTBG7TRzuqGoI7QvU5t0r/TsWsajpmsee7wFng0wJhsxwIDAQAB",
+    "permissions": [
+        "webRequest",
+        "webRequestBlocking",
+        "activeTab",
+        "storage",
+        "<all_urls>"
+    ]
+}
