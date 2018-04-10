@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 
 import csv
 
@@ -16,6 +17,27 @@ WINDOW_WIDTH = 366
 WINDOW_HEIGHT = 626
 USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"
 
+def check_setup():
+    browser_exes = ["google-chrome", "chrome"]
+    for browser_exe in browser_exes:
+        try:
+            proc = subprocess.Popen([browser_exe, "--version"], stdout=subprocess.PIPE)
+        except OSError:
+            continue
+        else:
+            if proc.communicate()[0].startswith("Google Chrome 64.0.3282.140"):
+                break
+            else: proc = None
+    if not proc:
+        print "Couldn't find Google Chrome 64.0.3282.140"
+        sys.exit(1)
+    if not os.path.isfile("chrome_ext.crx"):
+        print "Couldn't find packaged chrome extension"
+        sys.exit(1)
+    if not os.path.isfile("chrome_ext.pem"):
+        print "Couldn't find chrome extension key"
+        sys.exit(1)
+
 desktop_scraper = SeleniumScraper(CHROME_PATH)
 mobile_scraper = SeleniumScraper(CHROME_PATH, width=WINDOW_WIDTH, height=WINDOW_HEIGHT, user_agent=USER_AGENT)
 
@@ -25,6 +47,8 @@ if (DEBUG):
     LIMIT = 10
 else:
     LIMIT = None
+
+check_setup()
 
 try:
     domains = open(INPUT_DOMAINS, 'r')

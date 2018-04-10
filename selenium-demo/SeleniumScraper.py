@@ -14,7 +14,6 @@ class SeleniumScraper:
 
     def __init__(self, chromedriver, width=None, height=None, user_agent=None):
         opts = Options()
-        opts.set_headless(True)
         if width and height:
             opts.add_argument("--window-size={},{}".format(width, height))
 
@@ -23,7 +22,7 @@ class SeleniumScraper:
         #opts.binary_location = "/usr/bin/google-chrome-stable"
 
         opts.add_argument("load-extension=chrome_ext")
-        opts.add_argument("load-extension-key=chrome_ext.pem")
+        opts.add_argument("load-extension-key=chrome_ext_development_only.pem")
 
         self.driver = webdriver.Chrome(chromedriver, options=opts)
         if user_agent:
