@@ -19,6 +19,8 @@ WINDOW_WIDTH = 366
 WINDOW_HEIGHT = 626
 USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"
 
+USE_XVFB = False
+
 DEBUG = True
 if (DEBUG):
     LIMIT = 10
@@ -77,8 +79,17 @@ def crawl_domains(desktop_scraper, mobile_scraper):
             output.flush()
 
 
+# https://stackoverflow.com/a/27806978
+class dummy_context_mgr():
+    def __enter__(self):
+        return None
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
+
+
 def main():
-    with Xvfb() as xvfb:
+    with Xvfb() if USE_XVFB else dummy_context_mgr() as xvfb:
         desktop_scraper = SeleniumScraper(CHROME_PATH)
         mobile_scraper = SeleniumScraper(CHROME_PATH,
                                          width=WINDOW_WIDTH,
