@@ -48,4 +48,5 @@ with open(OUTPUT_FILE, 'w') as output:
         # Scan mobile
         mobile_headers = mobile_scraper.analyze(url)
         writer.writerow([url, desktop_headers, mobile_headers])
+        output.flush()
 
