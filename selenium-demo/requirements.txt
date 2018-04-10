@@ -4,3 +4,4 @@ idna==2.6
 requests==2.18.4
 selenium==3.11.0
 urllib3==1.22
+xvfbwrapper==0.2.9

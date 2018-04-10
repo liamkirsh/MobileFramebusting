@@ -22,7 +22,6 @@ class SeleniumScraper:
         #opts.binary_location = "/usr/bin/google-chrome-stable"
 
         opts.add_argument("load-extension=chrome_ext")
-        opts.add_argument("load-extension-key=chrome_ext_development_only.pem")
 
         self.driver = webdriver.Chrome(chromedriver, options=opts)
         if user_agent:
