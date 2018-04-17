@@ -4,7 +4,6 @@ import requests
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from requests.exceptions import ConnectionError
 
 EXT_ID = "nfjcdbackpnnlbnkmjfjgiokldjefbma"
 
