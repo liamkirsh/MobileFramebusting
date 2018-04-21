@@ -4,8 +4,21 @@ import requests
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.common.exceptions import *
 
 EXT_ID = "nfjcdbackpnnlbnkmjfjgiokldjefbma"
+
+
+class frame_JS_to_be_available_and_switch_to_it:  # Default: check every 500 ms
+    def __init__(self, locator):
+        self.locator = locator
+    def __call__(self, driver):
+        try:
+            driver.switch_to.frame(self.locator)
+        except NoSuchFrameException:
+            return False
+        return not driver.execute_script('return self === top')
 
 class SeleniumScraper:
     headers = {}
@@ -28,7 +41,25 @@ class SeleniumScraper:
         else:
             print("Chrome Headless Browser Invoked")
 
-    def analyze(self, url):
+    def frame_test(self, url, fpath):
+        # FIXME: find a way to get a full screenshot without resizing the window?
+        #self.driver.set_window_rect(width=1920, height=1080)
+        self.driver.get("file:///home/liam/Documents/14-828/MobileFramebusting/selenium-demo/empty.html")
+        newframe_js = " ".join([
+            'var newframe = document.createElement("iframe");',
+            'newframe.id = "myframe";',
+            'newframe.height = screen.height;',
+            'newframe.width = screen.width;',
+            'newframe.src = "{}";'.format(url),
+            'document.body.appendChild(newframe)'
+        ])
+        print newframe_js
+        self.driver.execute_script(newframe_js)
+        WebDriverWait(self.driver, 10).until(frame_JS_to_be_available_and_switch_to_it("myframe"))
+        self.driver.save_screenshot(fpath)
+
+    def get_security_headers(self, url):
+        # FIXME: reset window size for mobile test
         self.driver.get(url)
         mobile_url = self.driver.current_url
         if mobile_url != url:
