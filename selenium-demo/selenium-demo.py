@@ -64,11 +64,23 @@ def check_setup():
 
 def has_framebust_header(security_headers):
     # FIXME: this is probably incomplete
+    # FIXME: consider cases where XFO takes precedent over CSP or vice versa
     def is_framebust_header(header):
-        if header['name'].lower() == 'x-frame-options':
-            if (header['value'].lower() == 'sameorigin' or
-                header['value'].lower() == 'deny'):
+        hname = header['name'].lower()
+        hvalue = header['value'].lower()
+
+        if hname == 'x-frame-options':
+            if (hvalue == 'sameorigin' or
+                hvalue == 'deny'):
                 return True
+        elif hname == 'content-security-policy':
+            csp_directives = [directive.strip() for directive in hvalue.split(';')]
+            frame_ancestors = next(directive for directive in csp_directives
+                                   if directive.startswith("frame-ancestors"), None)
+            if frame_ancestors:
+                frame_ancestor_sources = frame_ancestors.split()[1:]
+                if "'self'" or "'none'" in frame_ancestor_sources:
+                    return True
         return False
 
     return any(is_framebust_header(header) for header in security_headers)
