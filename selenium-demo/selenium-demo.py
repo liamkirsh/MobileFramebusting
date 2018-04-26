@@ -75,8 +75,8 @@ def has_framebust_header(security_headers):
                 return True
         elif hname == 'content-security-policy':
             csp_directives = [directive.strip() for directive in hvalue.split(';')]
-            frame_ancestors = next(directive for directive in csp_directives
-                                   if directive.startswith("frame-ancestors"), None)
+            frame_ancestors = next((directive for directive in csp_directives
+                                   if directive.startswith("frame-ancestors")), None)
             if frame_ancestors:
                 frame_ancestor_sources = frame_ancestors.split()[1:]
                 if "'self'" or "'none'" in frame_ancestor_sources:
@@ -113,11 +113,11 @@ def crawl_domains(desktop_scraper, mobile_scraper):
             writer.writerow([url, desktop_headers, mobile_headers])
             output.flush()
 
-            if TEST_DESKTOP and not has_framebust_header(desktop_headers['securityHeaders']):
+            if TEST_DESKTOP:  # and not has_framebust_header(desktop_headers['securityHeaders']):
                 fmted_domain = domain.rsplit('.', 1)[0]
                 fpath = "screenshots/{}.png".format(fmted_domain)
                 desktop_scraper.frame_test(url, fpath)
-            if TEST_MOBILE and no_framebust_headers(mobile_headers['securityHeaders']):
+            if TEST_MOBILE:   # and not has_framebust_header(mobile_headers['securityHeaders']):
                 fmted_domain = domain.rsplit('.', 1)[0]
                 fpath = "screenshots/mobile_{}.png".format(fmted_domain)
                 mobile_scraper.frame_test(url, fpath)
