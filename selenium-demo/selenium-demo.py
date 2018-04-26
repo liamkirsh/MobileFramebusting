@@ -8,32 +8,16 @@ import errno
 from xvfbwrapper import Xvfb
 
 from SeleniumScraper import SeleniumScraper
+from config import *
 
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
 CHROME_PATH = os.path.join(__location__, "chromedriver")
 
-INPUT_DOMAINS = "top-100.txt"
-OUTPUT_FILE = "headers.csv"
-
-WINDOW_WIDTH = 366
-WINDOW_HEIGHT = 626
-USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"
-
-USE_XVFB = False
-TEST_DESKTOP = True
-TEST_MOBILE = False
-
-DEBUG = True
-if (DEBUG):
-    LIMIT = 10
-else:
-    LIMIT = None
-
 
 def check_setup():
     # Try to find Chrome 64 installation
-    browser_exes = ["google-chrome", "chrome"]
+    browser_exes = ["google-chrome", "chrome", "google-chrome-stable"]
     for browser_exe in browser_exes:
         try:
             proc = subprocess.Popen([browser_exe, "--version"],
@@ -56,7 +40,7 @@ def check_setup():
         sys.exit(1)
     # Create screenshots directory if it doesn't exist
     try:
-        os.makedirs("screenshots")
+        os.makedirs(SCREENSHOTS_DIR)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -98,7 +82,7 @@ def crawl_domains(desktop_scraper, mobile_scraper):
         writer = csv.writer(output)
         writer.writerow(['domain', 'desktop xfo', 'desktop csp', 'mobile xfo', 'mobile csp'])
         for rank, domain in enumerate(domains):
-            if DEBUG and rank == LIMIT:
+            if DEBUG and rank == DEBUG_LIMIT:
                 break
 
             url = "http://" + domain.strip()
@@ -106,9 +90,8 @@ def crawl_domains(desktop_scraper, mobile_scraper):
                 print("Rank {}: checking headers at {}".format(rank, url))
 
             # Scan desktop
-            if TEST_DESKTOP:
-                desktop_headers = desktop_scraper.get_security_headers(url) if TEST_DESKTOP else None
-                print desktop_headers
+            if RUN_DESKTOP_TEST:
+                desktop_headers = desktop_scraper.get_security_headers(url)
                 desktop_xfo = next((header['value'] for header in desktop_headers
                                     if header['name'].lower() == 'x-frame-options'), "")
                 desktop_csp = next((header['value'] for header in desktop_headers
@@ -118,7 +101,7 @@ def crawl_domains(desktop_scraper, mobile_scraper):
                 desktop_csp = None
 
             # Scan mobile
-            if TEST_MOBILE:
+            if RUN_MOBILE_TEST:
                 mobile_headers = mobile_scraper.get_security_headers(url) if TEST_MOBILE else None
                 print mobile_headers
                 mobile_xfo = next((header['value'] for header in mobile_headers
@@ -132,13 +115,13 @@ def crawl_domains(desktop_scraper, mobile_scraper):
             writer.writerow([url, desktop_xfo, desktop_csp, mobile_xfo, mobile_csp])
             output.flush()
 
-            if TEST_DESKTOP:  # and not has_framebust_header(desktop_headers['securityHeaders']):
+            if RUN_DESKTOP_TEST:  # and not has_framebust_header(desktop_headers['securityHeaders']):
                 fmted_domain = domain.rsplit('.', 1)[0]
-                fpath = "screenshots/{}.png".format(fmted_domain)
+                fpath = "{}/{}.png".format(SCREENSHOTS_DIR, fmted_domain)
                 desktop_scraper.frame_test(url, fpath)
-            if TEST_MOBILE:   # and not has_framebust_header(mobile_headers['securityHeaders']):
+            if RUN_MOBILE_TEST:   # and not has_framebust_header(mobile_headers['securityHeaders']):
                 fmted_domain = domain.rsplit('.', 1)[0]
-                fpath = "screenshots/mobile_{}.png".format(fmted_domain)
+                fpath = "{}/mobile_{}.png".format(SCREENSHOTS_DIR, fmted_domain)
                 mobile_scraper.frame_test(url, fpath)
 
 
@@ -153,12 +136,13 @@ class dummy_context_mgr():
 
 def main():
     with Xvfb() if USE_XVFB else dummy_context_mgr() as xvfb:
-        desktop_scraper = SeleniumScraper(CHROME_PATH) if TEST_DESKTOP else None
+        desktop_scraper = SeleniumScraper(CHROME_PATH, extensions=["chrome_ext"]) if RUN_DESKTOP_TEST else None
         mobile_scraper = (SeleniumScraper(CHROME_PATH,
                                           width=WINDOW_WIDTH,
                                           height=WINDOW_HEIGHT,
-                                          user_agent=USER_AGENT)
-                          if TEST_MOBILE else None)
+                                          user_agent=USER_AGENT,
+                                          extensions=["chrome_ext"])
+                          if RUN_MOBILE_TEST else None)
 
         check_setup()
         crawl_domains(desktop_scraper, mobile_scraper)

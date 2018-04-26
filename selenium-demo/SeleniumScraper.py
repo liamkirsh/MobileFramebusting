@@ -1,4 +1,5 @@
 import sys
+import os
 
 import requests
 
@@ -7,8 +8,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.common.exceptions import *
 
-EXT_ID = "nfjcdbackpnnlbnkmjfjgiokldjefbma"
+from config import *
 
+__location__ = os.path.realpath(
+    os.path.join(os.getcwd(), os.path.dirname(__file__)))
+EMPTY_HTML_PATH = os.path.join(__location__, "empty.html")
 
 class frame_JS_to_be_available_and_switch_to_it:  # Default: check every 500 ms
     def __init__(self, locator):
@@ -24,7 +28,12 @@ class SeleniumScraper:
     headers = {}
     HEADERS_TO_LOG = ["x-frame-options", "content-security-policy"]
 
-    def __init__(self, chromedriver, width=None, height=None, user_agent=None):
+    def __init__(self,
+                 chromedriver,
+                 width=None,
+                 height=None,
+                 user_agent=None,
+                 extensions=[]):
         opts = Options()
         if width and height:
             opts.add_argument("--window-size={},{}".format(width, height))
@@ -33,7 +42,9 @@ class SeleniumScraper:
             opts.add_argument("user-agent={}".format(user_agent))
         #opts.binary_location = "/usr/bin/google-chrome-stable"
 
-        opts.add_argument("load-extension=chrome_ext")
+        if extensions:
+            for ext in extensions:
+                opts.add_argument("load-extension={}".format(ext))
 
         self.driver = webdriver.Chrome(chromedriver, options=opts)
         if user_agent:
@@ -44,7 +55,7 @@ class SeleniumScraper:
     def frame_test(self, url, fpath):
         # FIXME: find a way to get a full screenshot without resizing the window?
         #self.driver.set_window_rect(width=1920, height=1080)
-        self.driver.get("file:///home/liam/Documents/14-828/MobileFramebusting/selenium-demo/empty.html")
+        self.driver.get("file://{}".format(EMPTY_HTML_PATH))
         newframe_js = " ".join([
             'var newframe = document.createElement("iframe");',
             'newframe.id = "myframe";',
@@ -55,7 +66,7 @@ class SeleniumScraper:
         ])
         print newframe_js
         self.driver.execute_script(newframe_js)
-        WebDriverWait(self.driver, 10).until(frame_JS_to_be_available_and_switch_to_it("myframe"))
+        WebDriverWait(self.driver, FRAME_LOAD_WAIT).until(frame_JS_to_be_available_and_switch_to_it("myframe"))
         self.driver.save_screenshot(fpath)
 
     def get_security_headers(self, url):
