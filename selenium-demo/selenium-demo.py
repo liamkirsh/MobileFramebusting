@@ -5,7 +5,6 @@ import subprocess
 import csv
 import errno
 
-from xvfbwrapper import Xvfb
 
 from SeleniumScraper import SeleniumScraper
 from config import *
@@ -14,6 +13,8 @@ __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
 CHROME_PATH = os.path.join(__location__, "chromedriver")
 
+if len(sys.argv) > 1:
+	INPUT_DOMAINS = sys.argv[1];
 
 def check_setup():
     # Try to find Chrome 64 installation
