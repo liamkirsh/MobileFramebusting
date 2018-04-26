@@ -68,7 +68,7 @@ class SeleniumScraper:
         self.driver.get("chrome-extension://{}/_generated_background_page.html".format(EXT_ID))
 
         return self.driver.execute_async_script(
-            "chrome.storage.local.get('securityHeaders', arguments[0])")
+            "chrome.storage.local.get('securityHeaders', arguments[0])")['securityHeaders']
 
     def shutdown(self):
         self.driver.quit()

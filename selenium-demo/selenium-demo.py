@@ -96,7 +96,7 @@ def crawl_domains(desktop_scraper, mobile_scraper):
 
     with open(OUTPUT_FILE, 'w') as output:
         writer = csv.writer(output)
-        writer.writerow(['domain', 'desktop', 'mobile'])
+        writer.writerow(['domain', 'desktop xfo', 'desktop csp', 'mobile xfo', 'mobile csp'])
         for rank, domain in enumerate(domains):
             if DEBUG and rank == LIMIT:
                 break
@@ -106,11 +106,30 @@ def crawl_domains(desktop_scraper, mobile_scraper):
                 print("Rank {}: checking headers at {}".format(rank, url))
 
             # Scan desktop
-            desktop_headers = desktop_scraper.get_security_headers(url) if TEST_DESKTOP else None
+            if TEST_DESKTOP:
+                desktop_headers = desktop_scraper.get_security_headers(url) if TEST_DESKTOP else None
+                print desktop_headers
+                desktop_xfo = next((header['value'] for header in desktop_headers
+                                    if header['name'].lower() == 'x-frame-options'), "")
+                desktop_csp = next((header['value'] for header in desktop_headers
+                                    if header['name'].lower() == 'content-security-policy'), "")
+            else:
+                desktop_xfo = None
+                desktop_csp = None
 
             # Scan mobile
-            mobile_headers = mobile_scraper.get_security_headers(url) if TEST_MOBILE else None
-            writer.writerow([url, desktop_headers, mobile_headers])
+            if TEST_MOBILE:
+                mobile_headers = mobile_scraper.get_security_headers(url) if TEST_MOBILE else None
+                print mobile_headers
+                mobile_xfo = next((header['value'] for header in mobile_headers
+                                    if header['name'].lower() == 'x-frame-options'), "")
+                mobile_csp = next((header['value'] for header in mobile_headers
+                                    if header['name'].lower() == 'content-security-policy'), "")
+            else:
+                mobile_xfo = None
+                mobile_csp = None
+
+            writer.writerow([url, desktop_xfo, desktop_csp, mobile_xfo, mobile_csp])
             output.flush()
 
             if TEST_DESKTOP:  # and not has_framebust_header(desktop_headers['securityHeaders']):
