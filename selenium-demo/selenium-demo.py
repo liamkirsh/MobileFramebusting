@@ -103,7 +103,7 @@ def crawl_domains(desktop_scraper, mobile_scraper):
 
             # Scan mobile
             if RUN_MOBILE_TEST:
-                mobile_headers = mobile_scraper.get_security_headers(url) if TEST_MOBILE else None
+                mobile_headers = mobile_scraper.get_security_headers(url) if RUN_MOBILE_TEST else None
                 print mobile_headers
                 mobile_xfo = next((header['value'] for header in mobile_headers
                                     if header['name'].lower() == 'x-frame-options'), "")
@@ -139,9 +139,9 @@ def main():
     with Xvfb() if USE_XVFB else dummy_context_mgr() as xvfb:
         desktop_scraper = SeleniumScraper(CHROME_PATH, extensions=["chrome_ext"]) if RUN_DESKTOP_TEST else None
         mobile_scraper = (SeleniumScraper(CHROME_PATH,
-                                          width=WINDOW_WIDTH,
-                                          height=WINDOW_HEIGHT,
-                                          user_agent=USER_AGENT,
+                                          width=MOBILE_WIDTH,
+                                          height=MOBILE_HEIGHT,
+                                          user_agent=MOBILE_AGENT,
                                           extensions=["chrome_ext"])
                           if RUN_MOBILE_TEST else None)
 

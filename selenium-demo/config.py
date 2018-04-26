@@ -8,7 +8,7 @@ MOBILE_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWe
 
 USE_XVFB = False
 RUN_DESKTOP_TEST = True
-RUN_MOBILE_TEST = False
+RUN_MOBILE_TEST = True
 
 DEBUG = True
 DEBUG_LIMIT = 10
