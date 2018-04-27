@@ -33,7 +33,8 @@ class SeleniumScraper:
                  width=None,
                  height=None,
                  user_agent=None,
-                 extensions=[]):
+                 load_extensions=[],
+                 add_extensions=[]):
         opts = Options()
         if width and height:
             opts.add_argument("--window-size={},{}".format(width, height))
@@ -42,9 +43,12 @@ class SeleniumScraper:
             opts.add_argument("user-agent={}".format(user_agent))
         #opts.binary_location = "/usr/bin/google-chrome-stable"
 
-        if extensions:
-            for ext in extensions:
+        if load_extensions:
+            for ext in load_extensions:
                 opts.add_argument("load-extension={}".format(ext))
+        if add_extensions:
+            for ext in add_extensions:
+                opts.add_extension(ext)
 
         self.driver = webdriver.Chrome(chromedriver, options=opts)
         if user_agent:
@@ -52,9 +56,16 @@ class SeleniumScraper:
         else:
             print("Chrome Headless Browser Invoked")
 
+
+    def toggle_ignore_xfo(self):
+        self.driver.get("chrome://extensions")
+        self.driver.find_elements_by_class_name("enable-checkbox")[1].find_element_by_xpath("./label/input").click()
+
+
     def frame_test(self, url, fpath):
         # FIXME: find a way to get a full screenshot without resizing the window?
         #self.driver.set_window_rect(width=1920, height=1080)
+        #self.toggle_ignore_xfo()
         self.driver.get("file://{}".format(EMPTY_HTML_PATH))
         newframe_js = " ".join([
             'var newframe = document.createElement("iframe");',
@@ -64,10 +75,10 @@ class SeleniumScraper:
             'newframe.src = "{}";'.format(url),
             'document.body.appendChild(newframe)'
         ])
-        print newframe_js
         self.driver.execute_script(newframe_js)
         WebDriverWait(self.driver, FRAME_LOAD_WAIT).until(frame_JS_to_be_available_and_switch_to_it("myframe"))
         self.driver.save_screenshot(fpath)
+        #self.toggle_ignore_xfo()
 
     def get_security_headers(self, url):
         # FIXME: reset window size for mobile test
@@ -80,6 +91,7 @@ class SeleniumScraper:
 
         return self.driver.execute_async_script(
             "chrome.storage.local.get('securityHeaders', arguments[0])")['securityHeaders']
+
 
     def shutdown(self):
         self.driver.quit()
