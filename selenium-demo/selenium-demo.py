@@ -104,10 +104,6 @@ def crawl_domains(desktop_scraper, mobile_scraper):
             # Scan mobile
             if RUN_MOBILE_TEST:
                 mobile_headers = mobile_scraper.get_security_headers(url) if RUN_MOBILE_TEST else None
-<<<<<<< HEAD
-                print mobile_headers
-=======
->>>>>>> fffaa312e9c72396b42fa7b1456ce199fdc0ba17
                 mobile_xfo = next((header['value'] for header in mobile_headers
                                     if header['name'].lower() == 'x-frame-options'), "")
                 mobile_csp = next((header['value'] for header in mobile_headers
@@ -145,18 +141,11 @@ def main():
                                           add_extensions=["Ignore_X-Frame_headers.crx"])
                            if RUN_DESKTOP_TEST else None)
         mobile_scraper = (SeleniumScraper(CHROME_PATH,
-<<<<<<< HEAD
                                           width=MOBILE_WIDTH,
                                           height=MOBILE_HEIGHT,
                                           user_agent=MOBILE_AGENT,
-                                          extensions=["chrome_ext"])
-=======
-                                          width=WINDOW_WIDTH,
-                                          height=WINDOW_HEIGHT,
-                                          user_agent=USER_AGENT,
                                           load_extensions=["chrome_ext"],
                                           add_extensions=["Ignore_X-Frame_headers.crx"])
->>>>>>> fffaa312e9c72396b42fa7b1456ce199fdc0ba17
                           if RUN_MOBILE_TEST else None)
 
         check_setup()
