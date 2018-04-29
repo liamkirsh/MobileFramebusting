@@ -22,7 +22,10 @@ class frame_JS_to_be_available_and_switch_to_it:  # Default: check every 500 ms
             driver.switch_to.frame(self.locator)
         except NoSuchFrameException:
             return False
-        return not driver.execute_script('return self === top')
+        #return driver.execute_script('return self !== top') and driver.execute_script('return document.readyState === "complete"')
+        print driver.execute_script('return document.readyState')
+        return (driver.execute_script('return self !== top') and
+                driver.execute_script('return document.readyState === "interactive" || document.readyState === "complete"'))
 
 class SeleniumScraper:
     headers = {}
@@ -35,6 +38,8 @@ class SeleniumScraper:
                  user_agent=None,
                  load_extensions=[],
                  add_extensions=[]):
+        self.chromedriver = chromedriver
+
         opts = Options()
         if width and height:
             opts.add_argument("--window-size={},{}".format(width, height))
@@ -50,11 +55,20 @@ class SeleniumScraper:
             for ext in add_extensions:
                 opts.add_extension(ext)
 
-        self.driver = webdriver.Chrome(chromedriver, options=opts)
+        self.opts = opts
+
+        self.driver = webdriver.Chrome(self.chromedriver, options=self.opts)
         if user_agent:
             print("Chrome Headless Browser Invoked with Custom User Agent")
         else:
             print("Chrome Headless Browser Invoked")
+        self.driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT)
+
+
+    def reinit(self):
+        self.driver.quit()
+        self.driver = webdriver.Chrome(self.chromedriver, options=self.opts)
+        self.driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT)
 
 
     def toggle_ignore_xfo(self):
@@ -76,22 +90,32 @@ class SeleniumScraper:
             'document.body.appendChild(newframe)'
         ])
         self.driver.execute_script(newframe_js)
-        WebDriverWait(self.driver, FRAME_LOAD_WAIT).until(frame_JS_to_be_available_and_switch_to_it("myframe"))
-        self.driver.save_screenshot(fpath)
+        try:
+            WebDriverWait(self.driver, FRAME_LOAD_WAIT).until(frame_JS_to_be_available_and_switch_to_it("myframe"))
+            self.driver.save_screenshot(fpath)
+        except TimeoutException:
+            sys.stderr.write("Framing {} timed out after {} seconds\n".format(url, FRAME_LOAD_WAIT))
         #self.toggle_ignore_xfo()
 
     def get_security_headers(self, url):
         # FIXME: reset window size for mobile test
-        self.driver.get(url)
-        mobile_url = self.driver.current_url
-        if mobile_url != url:
-            print("Redirect to " + mobile_url)
+        try:
+            self.driver.get(url)
+            mobile_url = self.driver.current_url
+            if mobile_url != url:
+                print("Redirect to " + mobile_url)
+        except TimeoutException:
+            sys.stderr.write("URL {} timed out after {} seconds\n".format(url, PAGE_LOAD_TIMEOUT))
+            raise HeaderTimeout
 
         self.driver.get("chrome-extension://{}/_generated_background_page.html".format(EXT_ID))
 
-        return self.driver.execute_async_script(
-            "chrome.storage.local.get('securityHeaders', arguments[0])")['securityHeaders']
+        return (mobile_url, self.driver.execute_async_script(
+            "chrome.storage.local.get('securityHeaders', arguments[0])")['securityHeaders'])
 
 
     def shutdown(self):
         self.driver.quit()
+
+class HeaderTimeout(Exception):
+    pass

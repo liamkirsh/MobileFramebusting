@@ -5,8 +5,7 @@ import subprocess
 import csv
 import errno
 
-
-from SeleniumScraper import SeleniumScraper
+from SeleniumScraper import SeleniumScraper, HeaderTimeout
 from config import *
 
 __location__ = os.path.realpath(
@@ -81,7 +80,7 @@ def crawl_domains(desktop_scraper, mobile_scraper):
 
     with open(OUTPUT_FILE, 'w') as output:
         writer = csv.writer(output)
-        writer.writerow(['domain', 'desktop xfo', 'desktop csp', 'mobile xfo', 'mobile csp'])
+        writer.writerow(['domain', 'desktop xfo', 'desktop csp', 'mobile redir URL', 'mobile xfo', 'mobile csp'])
         for rank, domain in enumerate(domains):
             if DEBUG and rank == DEBUG_LIMIT:
                 break
@@ -92,37 +91,50 @@ def crawl_domains(desktop_scraper, mobile_scraper):
 
             # Scan desktop
             if RUN_DESKTOP_TEST:
-                desktop_headers = desktop_scraper.get_security_headers(url)
-                desktop_xfo = next((header['value'] for header in desktop_headers
-                                    if header['name'].lower() == 'x-frame-options'), "")
-                desktop_csp = next((header['value'] for header in desktop_headers
-                                    if header['name'].lower() == 'content-security-policy'), "")
+                try:
+                    _, desktop_headers = desktop_scraper.get_security_headers(url)
+                    desktop_xfo = next((header['value'] for header in desktop_headers
+                                        if header['name'].lower() == 'x-frame-options'), "")
+                    desktop_csp = next((header['value'] for header in desktop_headers
+                                        if header['name'].lower() == 'content-security-policy'), "")
+                except HeaderTimeout:
+                    desktop_scraper.reinit()
+                    desktop_xfo = "TIMEOUT_ERROR"
+                    desktop_csp = "TIMEOUT_ERROR"
             else:
                 desktop_xfo = None
                 desktop_csp = None
 
             # Scan mobile
             if RUN_MOBILE_TEST:
-                mobile_headers = mobile_scraper.get_security_headers(url) if RUN_MOBILE_TEST else None
-                mobile_xfo = next((header['value'] for header in mobile_headers
-                                    if header['name'].lower() == 'x-frame-options'), "")
-                mobile_csp = next((header['value'] for header in mobile_headers
-                                    if header['name'].lower() == 'content-security-policy'), "")
+                try:
+                    m_redir_url, mobile_headers = mobile_scraper.get_security_headers(url) if RUN_MOBILE_TEST else None
+                    mobile_xfo = next((header['value'] for header in mobile_headers
+                                        if header['name'].lower() == 'x-frame-options'), "")
+                    mobile_csp = next((header['value'] for header in mobile_headers
+                                        if header['name'].lower() == 'content-security-policy'), "")
+                except HeaderTimeout:
+                    mobile_scraper.reinit()
+                    m_redir_url = "TIMEOUT_ERROR"
+                    mobile_xfo = "TIMEOUT_ERROR"
+                    mobile_csp = "TIMEOUT_ERROR"
             else:
                 mobile_xfo = None
                 mobile_csp = None
 
-            writer.writerow([url, desktop_xfo, desktop_csp, mobile_xfo, mobile_csp])
+            writer.writerow([url, desktop_xfo, desktop_csp, m_redir_url, mobile_xfo, mobile_csp])
             output.flush()
 
+            """
             if RUN_DESKTOP_TEST:  # and not has_framebust_header(desktop_headers['securityHeaders']):
-                fmted_domain = domain.rsplit('.', 1)[0]
+                fmted_domain = domain
                 fpath = "{}/{}.png".format(SCREENSHOTS_DIR, fmted_domain)
                 desktop_scraper.frame_test(url, fpath)
             if RUN_MOBILE_TEST:   # and not has_framebust_header(mobile_headers['securityHeaders']):
                 fmted_domain = domain.rsplit('.', 1)[0]
                 fpath = "{}/mobile_{}.png".format(SCREENSHOTS_DIR, fmted_domain)
                 mobile_scraper.frame_test(url, fpath)
+            """
 
 
 # https://stackoverflow.com/a/27806978
