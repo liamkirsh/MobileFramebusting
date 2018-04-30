@@ -1,7 +1,10 @@
+import sys
 import os
 import glob
 import unittest
 import time
+import json
+from pprint import pprint
 
 from appium import webdriver
 # import org.openqa.selenium.chrome.ChromeDriver;
@@ -19,6 +22,8 @@ def log(msg):
 class AndroidWebViewTests(unittest.TestCase):
 
     def setUp(self):
+
+        self.logFile = open("logFile.txt","a+")
 
         desired_caps = {
             'platformName': 'Android',
@@ -43,30 +48,68 @@ class AndroidWebViewTests(unittest.TestCase):
 #        log ("Taking screenshot of home page: '0_chromeLaunched.png'")
 #        self.driver.save_screenshot(screenshot_path + "/0_chromeLaunched.png")
 
-        log ("Loading page")
-        self.driver.get("https://bitbar.com/testing")
+        self.driver.implicitly_wait(10)
+#        self.driver.set_page_timeout(10)
+#        self.driver.set_script_timeout(10)
+        self.driver.set_page_load_timeout(10)
+        try:
+            domains = open("top-100.txt", 'r')
+        except IOError:
+            sys.stderr.write("Error opening input domain list \n")
+            sys.exit(1)
 
-#        log("getting log types")
-#        temp = self.driver.log_types
-#        log(str(temp))
+        for rank, domain in enumerate(domains):
+            try:
+                url = "http://" + domain.strip()
+                log(url)
 
-        log("getting logs")
- #       logs = self.driver.get_log("browser")
- #       log(str(logs))
+    #            log ("Loading page")
+    #            self.driver.get("https://bitbar.com/testing")
+                self.driver.get(url)
 
-        logs = self.driver.get_log("performance")
-        log(str(logs))
+            except:
+                log(url + ": ERROR restarting and moving on\n")
+                self.logFile.write(url + ": ERROR\n")
+                self.tearDown()
+                self.setUp()
 
- #       log("trying script")
- #       time.sleep(5)
- #       timings = self.driver.execute_script("return window.performance.getEntries();")
- #       log( str(timings))
-        
+
+            try:
+                log("Screenshotting")
+                self.driver.save_screenshot(screenshot_path + "/" + domain + ".png")
+                
+                log("getting logs")
+                #logs = self.driver.current_url
+                logs = self.driver.get_log("performance")
+                for entry in logs:
+                    pprint(entry)
+
+                
+           # log(str(logs))
+                jsontemp = json.dumps(logs)
+                self.logFile.write(jsontemp+'\n')
+                self.logFile.flush()
+            except:
+                self.logFile.flush()
+                log("error moving on")
+
+
+        log("completed")
+#        log ("Loading next page")
+#        self.driver.get("https://google.com")
+
+#        log("getting next logs")
+#        logs = self.driver.get_log("performance")
+        #log(str(logs))
+
+#        self.logFile.write("google: "+str(logs)+" \n")
+
 #        log(self.driver.logs.get("performance"))
 #2        log ("Taking screenshot of home page: '1_home.png'")
-#        self.driver.save_screenshot(screenshot_path + "/1_home.png")
+
 
     def tearDown(self):
+        self.logFile.close()
         self.driver.quit()
 
 
