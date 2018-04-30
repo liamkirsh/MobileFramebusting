@@ -7,6 +7,7 @@ import json
 from pprint import pprint
 
 from appium import webdriver
+#from appium import logging
 # import org.openqa.selenium.chrome.ChromeDriver;
 
 PLATFORM_VERSION = '7.0'
@@ -31,6 +32,8 @@ class AndroidWebViewTests(unittest.TestCase):
             'deviceName': 'AndroidDevice',
             'browserName': 'chrome',
             'enablePerformanceLogging': 'true',
+            'perfLoggingPrefs': {"enableNetwork": "true",
+                                 "enablePage": "false" },
             'loggingPrefs': { "browser": "ALL" }
         }
 
@@ -82,7 +85,19 @@ class AndroidWebViewTests(unittest.TestCase):
                 #logs = self.driver.current_url
                 logs = self.driver.get_log("performance")
                 for entry in logs:
-                    pprint(entry)
+                    if('message' in entry):
+#                        pprint(entry['message'])
+                        if('message' in entry['message']):
+                            jsondata = json.loads(entry['message'])
+                            if(jsondata['message']['method'] == "Network.responseReceived"):
+                                if('x-frame-options' in jsondata['message']['params']['response']['headers']):
+                                    print(jsondata['message']['params']['response']['headers']['x-frame-options'])
+                                if('content-security-policy' in jsondata['message']['params']['response']['headers']):
+                                    print(jsondata['message']['params']['response']['headers']['content-security-policy'])
+                            #type(entry['message']))
+#                            print(entry['message'].keys())
+#                            pprint(entry['message']['message'])
+#                    pprint(entry)
 
                 
            # log(str(logs))
