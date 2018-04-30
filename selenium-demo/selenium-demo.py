@@ -6,6 +6,8 @@ import csv
 import errno
 
 from SeleniumScraper import SeleniumScraper, HeaderTimeout
+from xvfbwrapper import Xvfb
+
 from config import *
 
 __location__ = os.path.realpath(
