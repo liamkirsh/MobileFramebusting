@@ -5,7 +5,7 @@ import subprocess
 import csv
 import errno
 
-from SeleniumScraper import SeleniumScraper, HeaderTimeout
+from SeleniumScraper import SeleniumScraper, HeaderTimeout, LocalStorageException
 from xvfbwrapper import Xvfb
 
 from config import *
@@ -80,14 +80,17 @@ def crawl_domains(desktop_scraper, mobile_scraper):
                          INPUT_DOMAINS + "\n")
         sys.exit(1)
 
-    with open(OUTPUT_FILE, 'w') as output:
+    with open(GET_OUTPUT_FNAME(), 'w') as output:
         writer = csv.writer(output)
         writer.writerow(['domain', 'desktop xfo', 'desktop csp', 'mobile redir URL', 'mobile xfo', 'mobile csp'])
         for rank, domain in enumerate(domains):
+            if rank < DOMAIN_START:
+                continue
             if DEBUG and rank == DEBUG_LIMIT:
                 break
 
-            url = "http://" + domain.strip()
+            fmted_domain = domain.strip()
+            url = "http://" + fmted_domain
             if DEBUG:
                 print("Rank {}: checking headers at {}".format(rank, url))
 
@@ -99,7 +102,7 @@ def crawl_domains(desktop_scraper, mobile_scraper):
                                         if header['name'].lower() == 'x-frame-options'), "")
                     desktop_csp = next((header['value'] for header in desktop_headers
                                         if header['name'].lower() == 'content-security-policy'), "")
-                except HeaderTimeout:
+                except (HeaderTimeout, LocalStorageException) as e:
                     desktop_scraper.reinit()
                     desktop_xfo = "TIMEOUT_ERROR"
                     desktop_csp = "TIMEOUT_ERROR"
@@ -115,7 +118,7 @@ def crawl_domains(desktop_scraper, mobile_scraper):
                                         if header['name'].lower() == 'x-frame-options'), "")
                     mobile_csp = next((header['value'] for header in mobile_headers
                                         if header['name'].lower() == 'content-security-policy'), "")
-                except HeaderTimeout:
+                except (HeaderTimeout, LocalStorageException) as e:
                     mobile_scraper.reinit()
                     m_redir_url = "TIMEOUT_ERROR"
                     mobile_xfo = "TIMEOUT_ERROR"
@@ -127,16 +130,12 @@ def crawl_domains(desktop_scraper, mobile_scraper):
             writer.writerow([url, desktop_xfo, desktop_csp, m_redir_url, mobile_xfo, mobile_csp])
             output.flush()
 
-            """
             if RUN_DESKTOP_TEST:  # and not has_framebust_header(desktop_headers['securityHeaders']):
-                fmted_domain = domain
                 fpath = "{}/{}.png".format(SCREENSHOTS_DIR, fmted_domain)
                 desktop_scraper.frame_test(url, fpath)
             if RUN_MOBILE_TEST:   # and not has_framebust_header(mobile_headers['securityHeaders']):
-                fmted_domain = domain.rsplit('.', 1)[0]
                 fpath = "{}/mobile_{}.png".format(SCREENSHOTS_DIR, fmted_domain)
                 mobile_scraper.frame_test(url, fpath)
-            """
 
 
 # https://stackoverflow.com/a/27806978

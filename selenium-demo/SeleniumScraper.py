@@ -20,12 +20,19 @@ class frame_JS_to_be_available_and_switch_to_it:  # Default: check every 500 ms
     def __call__(self, driver):
         try:
             driver.switch_to.frame(self.locator)
+            is_frame = driver.execute_script('return self !== top')
+
+            if is_frame:
+                readyState = driver.execute_script('return document.readyState')
+                print readyState
+                return readyState == "interactive" or readyState == "complete"
+            else:
+                return False
         except NoSuchFrameException:
             return False
-        #return driver.execute_script('return self !== top') and driver.execute_script('return document.readyState === "complete"')
-        print driver.execute_script('return document.readyState')
-        return (driver.execute_script('return self !== top') and
-                driver.execute_script('return document.readyState === "interactive" || document.readyState === "complete"'))
+        except WebDriverException as e:
+            if "Cannot find context" in str(e):  # fix for pixnet.net
+                return False
 
 class SeleniumScraper:
     headers = {}
@@ -67,8 +74,12 @@ class SeleniumScraper:
 
     def reinit(self):
         self.driver.quit()
-        self.driver = webdriver.Chrome(self.chromedriver, options=self.opts)
-        self.driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT)
+        try:
+            self.driver = webdriver.Chrome(self.chromedriver, options=self.opts)
+            self.driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT)
+        except SessionNotCreatedException as e:
+            sys.stderr.write(str(e))
+            self.reinit()  # Loop
 
 
     def toggle_ignore_xfo(self):
@@ -95,6 +106,9 @@ class SeleniumScraper:
             self.driver.save_screenshot(fpath)
         except TimeoutException:
             sys.stderr.write("Framing {} timed out after {} seconds\n".format(url, FRAME_LOAD_WAIT))
+        except UnexpectedAlertPresentException as e:
+            sys.stderr.write(str(e))
+            self.driver.switch_to_alert().accept()  # TODO: does this work?
         #self.toggle_ignore_xfo()
 
     def get_security_headers(self, url):
@@ -105,17 +119,24 @@ class SeleniumScraper:
             if mobile_url != url:
                 print("Redirect to " + mobile_url)
         except TimeoutException:
-            sys.stderr.write("URL {} timed out after {} seconds\n".format(url, PAGE_LOAD_TIMEOUT))
+            sys.stderr.write("Headers test {} timed out after {} seconds\n".format(url, PAGE_LOAD_TIMEOUT))
             raise HeaderTimeout
 
         self.driver.get("chrome-extension://{}/_generated_background_page.html".format(EXT_ID))
 
-        return (mobile_url, self.driver.execute_async_script(
-            "chrome.storage.local.get('securityHeaders', arguments[0])")['securityHeaders'])
+        try:
+            return (mobile_url, self.driver.execute_async_script(
+                "chrome.storage.local.get('securityHeaders', arguments[0])")['securityHeaders'])
+        except JavascriptException:
+            sys.stderr.write("Error getting localStorage headers for URL {}\n".format(url))
+            raise LocalStorageException
 
 
     def shutdown(self):
         self.driver.quit()
 
 class HeaderTimeout(Exception):
+    pass
+
+class LocalStorageException(Exception):
     pass
