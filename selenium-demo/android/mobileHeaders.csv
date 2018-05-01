@@ -1,0 +1,10 @@
+http://google.com,,,https://www.google.com/?gws_rd=ssl,SAMEORIGIN,
+http://youtube.com,,,https://m.youtube.com/,SAMEORIGIN,
+http://facebook.com,,,https://m.facebook.com/?refsrc=https%3A%2F%2Fwww.facebook.com%2F&_rdr,,
+http://baidu.com,,,https://m.baidu.com/?from=844b&vit=fps,,
+http://wikipedia.org,,,https://www.wikipedia.org/,,
+http://yahoo.com,,,https://www.yahoo.com/,SAMEORIGIN,sandbox allow-forms allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox; report-uri https://csp.yahoo.com/beacon/csp?src=frontpage&site=frontpage&region=US&lang=en-US&device=smartphone&yrid=9lumvi1dehalt&partner=;
+http://reddit.com,,,https://www.reddit.com/,,
+http://google.co.in,,,https://www.google.co.in/?gws_rd=ssl,SAMEORIGIN,
+http://qq.com,,,https://xw.qq.com/?f=qqcom,,
+http://taobao.com,,,https://h5.m.taobao.com/?sprefer=sypc00,,

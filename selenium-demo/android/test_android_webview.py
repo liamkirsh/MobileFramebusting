@@ -15,7 +15,7 @@ appium_URL = 'http://localhost:4723/wd/hub'
 # 'http://appium.com/';
 screenshot_path = '/home/bdavs/Pictures/chrome';
 
-
+logFile = open("mobileHeaders.csv","w+")
 
 def log(msg):
         print (time.strftime("%H:%M:%S") + ": " + msg)
@@ -24,7 +24,7 @@ class AndroidWebViewTests(unittest.TestCase):
 
     def setUp(self):
 
-        self.logFile = open("logFile.txt","a+")
+        
 
         desired_caps = {
             'platformName': 'Android',
@@ -51,7 +51,7 @@ class AndroidWebViewTests(unittest.TestCase):
 #        log ("Taking screenshot of home page: '0_chromeLaunched.png'")
 #        self.driver.save_screenshot(screenshot_path + "/0_chromeLaunched.png")
 
-        self.driver.implicitly_wait(10)
+#        self.driver.implicitly_wait(10)
 #        self.driver.set_page_timeout(10)
 #        self.driver.set_script_timeout(10)
         self.driver.set_page_load_timeout(10)
@@ -65,15 +65,15 @@ class AndroidWebViewTests(unittest.TestCase):
             try:
                 url = "http://" + domain.strip()
                 log(url)
-
+                logString=url
     #            log ("Loading page")
     #            self.driver.get("https://bitbar.com/testing")
                 self.driver.get(url)
 
             except:
                 log(url + ": ERROR restarting and moving on\n")
-                self.logFile.write(url + ": ERROR\n")
-                self.tearDown()
+                logFile.write(url + ": ERROR\n")
+                self.retry()
                 self.setUp()
 
 
@@ -84,16 +84,23 @@ class AndroidWebViewTests(unittest.TestCase):
                 log("getting logs")
                 #logs = self.driver.current_url
                 logs = self.driver.get_log("performance")
+                mobileURL=self.driver.current_url
                 for entry in logs:
+                    xfo=""
+                    csp=""
+
                     if('message' in entry):
 #                        pprint(entry['message'])
                         if('message' in entry['message']):
                             jsondata = json.loads(entry['message'])
                             if(jsondata['message']['method'] == "Network.responseReceived"):
                                 if('x-frame-options' in jsondata['message']['params']['response']['headers']):
-                                    print(jsondata['message']['params']['response']['headers']['x-frame-options'])
+                                    xfo = jsondata['message']['params']['response']['headers']['x-frame-options']
                                 if('content-security-policy' in jsondata['message']['params']['response']['headers']):
-                                    print(jsondata['message']['params']['response']['headers']['content-security-policy'])
+                                    csp = jsondata['message']['params']['response']['headers']['content-security-policy']
+
+                                logString=url+",,,"+mobileURL+","+xfo+","+csp
+                                break
                             #type(entry['message']))
 #                            print(entry['message'].keys())
 #                            pprint(entry['message']['message'])
@@ -101,11 +108,11 @@ class AndroidWebViewTests(unittest.TestCase):
 
                 
            # log(str(logs))
-                jsontemp = json.dumps(logs)
-                self.logFile.write(jsontemp+'\n')
-                self.logFile.flush()
+#                jsontemp = json.dumps(logs)
+                logFile.write(logString+'\n')
+                logFile.flush()
             except:
-                self.logFile.flush()
+                logFile.flush()
                 log("error moving on")
 
 
@@ -122,9 +129,10 @@ class AndroidWebViewTests(unittest.TestCase):
 #        log(self.driver.logs.get("performance"))
 #2        log ("Taking screenshot of home page: '1_home.png'")
 
-
+    def retry(self):
+        self.driver.quit()
     def tearDown(self):
-        self.logFile.close()
+        logFile.close()
         self.driver.quit()
 
 
