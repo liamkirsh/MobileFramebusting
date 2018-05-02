@@ -64,7 +64,7 @@ class AndroidWebViewTests(unittest.TestCase):
         for rank, domain in enumerate(domains):
             try:
                 url = "http://" + domain.strip()
-                log(url)
+                log(str(rank) + ":  " +url)
                 logString=url
     #            log ("Loading page")
     #            self.driver.get("https://bitbar.com/testing")
@@ -94,12 +94,20 @@ class AndroidWebViewTests(unittest.TestCase):
                         if('message' in entry['message']):
                             jsondata = json.loads(entry['message'])
                             if(jsondata['message']['method'] == "Network.responseReceived"):
+                                if('parentFrameId' in jsondata['message']['params']):
+#                                    print(jsondata['message']['params'])
+                                    continue
+                                if('type' in jsondata['message']['params']):
+                                    if(jsondata['message']['params']['type'] != 'Document'):
+                                        continue
                                 if('x-frame-options' in jsondata['message']['params']['response']['headers']):
                                     xfo = jsondata['message']['params']['response']['headers']['x-frame-options']
                                 if('content-security-policy' in jsondata['message']['params']['response']['headers']):
                                     csp = jsondata['message']['params']['response']['headers']['content-security-policy']
 
                                 logString=url+",,,"+mobileURL+","+xfo+","+csp
+                                logFile.write(logString+'\n')
+                                logFile.flush()
                                 break
                             #type(entry['message']))
 #                            print(entry['message'].keys())
@@ -109,8 +117,8 @@ class AndroidWebViewTests(unittest.TestCase):
                 
            # log(str(logs))
 #                jsontemp = json.dumps(logs)
-                logFile.write(logString+'\n')
-                logFile.flush()
+                #logFile.write(logString+'\n')
+                #logFile.flush()
             except:
                 logFile.flush()
                 log("error moving on")
