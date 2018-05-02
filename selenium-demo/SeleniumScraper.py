@@ -27,12 +27,24 @@ class frame_JS_to_be_available_and_switch_to_it:  # Default: check every 500 ms
                 print readyState
                 return readyState == "interactive" or readyState == "complete"
             else:
+                driver.switch_to.default_content()
                 return False
-        except NoSuchFrameException:
+        except NoSuchFrameException as e:
+            sys.stderr.write(str(e) + "\n")
             return False
         except WebDriverException as e:
             if "Cannot find context" in str(e):  # fix for pixnet.net
+                sys.stderr.write(str(e) + "\n")
                 return False
+            else:
+                raise
+        finally:
+            try:
+                driver.switch_to.default_content()
+            except KeyboardInterrupt:
+                raise
+            except:
+                pass
 
 class SeleniumScraper:
     headers = {}
