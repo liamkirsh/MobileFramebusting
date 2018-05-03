@@ -7,6 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.common.exceptions import *
+from selenium.webdriver.support import expected_conditions as EC
 
 from config import *
 
@@ -110,11 +111,14 @@ class SeleniumScraper:
             'newframe.height = screen.height;',
             'newframe.width = screen.width;',
             'newframe.src = "{}";'.format(url),
+            'newframe.sandbox = "";',
+            'newframe.onload = function() { document.title = "FrameLoaded" };'
             'document.body.appendChild(newframe)'
         ])
         self.driver.execute_script(newframe_js)
         try:
-            WebDriverWait(self.driver, FRAME_LOAD_WAIT).until(frame_JS_to_be_available_and_switch_to_it("myframe"))
+            #WebDriverWait(self.driver, FRAME_LOAD_WAIT).until(frame_JS_to_be_available_and_switch_to_it("myframe"))
+            WebDriverWait(self.driver, FRAME_LOAD_WAIT).until(EC.title_is("FrameLoaded"))
             self.driver.save_screenshot(fpath)
         except TimeoutException:
             sys.stderr.write("Framing {} timed out after {} seconds\n".format(url, FRAME_LOAD_WAIT))
