@@ -14,6 +14,6 @@ for filename in os.listdir(d):
 		if val < 30:
 			count += 1
 	if count >= 650:
-		output.write(filename + " is blank\n")
+		output.write(filename + ",0\n") #blank
 	else:
-		output.write(filename + " is not blank\n")
+		output.write(filename + ",1\n") #not blank
